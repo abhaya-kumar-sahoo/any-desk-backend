@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Antigravity Remote</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Antigravity Remote</h1>
+            <p>Access and control devices anywhere, anytime.</p>
+        </header>
+
+        <main>
+            <div id="home-view" class="view">
+                <div class="card-container">
+                    <div class="card" id="host-btn">
+                        <div class="icon">📡</div>
+                        <h2>Allow Remote Access</h2>
+                        <p>Share your screen and allow someone to control your device.</p>
+                        <button class="primary-btn">Start Hosting</button>
+                    </div>
+                    <div class="card" id="connect-btn">
+                        <div class="icon">🔗</div>
+                        <h2>Remote Control</h2>
+                        <p>Connect to another device using its access code.</p>
+                        <button class="secondary-btn">New Session</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="host-view" class="view hidden">
+                <div class="session-info">
+                    <h2>Host Mode Active</h2>
+                    <div class="code-display">
+                        <label>Your Access Code</label>
+                        <div class="code-box" id="access-code">--- ---</div>
+                    </div>
+                    <p class="status">Waiting for connection...</p>
+                    <button class="danger-btn" id="stop-host-btn">Stop Hosting</button>
+                </div>
+            </div>
+
+            <div id="connect-view" class="view hidden">
+                <div class="connection-form">
+                    <h2>Connect to Remote Device</h2>
+                    <div class="form-group">
+                        <label for="remote-code">Enter Access Code</label>
+                        <input type="text" id="remote-code" placeholder="000 000">
+                    </div>
+                    <div class="form-actions">
+                        <button class="secondary-btn" id="back-home-btn">Back</button>
+                        <button class="primary-btn" id="start-session-btn">Connect</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="remote-view" class="view hidden">
+                <div class="remote-container">
+                    <canvas id="remote-canvas"></canvas>
+                    <div class="remote-toolbar">
+                        <button id="disconnect-btn">Disconnect</button>
+                        <span id="quality-indicator">Latency: --ms</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="renderer.js"></script>
+</body>
+</html>
