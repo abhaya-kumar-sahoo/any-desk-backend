@@ -1,20 +1,72 @@
 {
-  "name": "anydesk",
+  "name": "antigravity-remote",
   "version": "1.0.0",
-  "description": "",
+  "description": "A high-performance remote desktop application.",
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
     "server": "node server/server.js",
-    "dev": "concurrently \"node server/server.js\" \"electron .\""
+    "dev": "concurrently \"node server/server.js\" \"electron .\"",
+    "build": "electron-builder build --mac --win",
+    "build:mac": "electron-builder build --mac --arm64",
+    "build:win": "electron-builder build --win --x64",
+    "postinstall": "electron-builder install-app-deps"
   },
-  "keywords": [],
-  "author": "",
+  "build": {
+    "appId": "com.antigravity.abhaya",
+    "productName": "Abhaya Dev",
+    "asar": true,
+    "asarUnpack": [
+      "**/node_modules/@nut-tree-fork/libnut/build/Release/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "package.json",
+      "src/**/*",
+      "node_modules/**/*",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,LICENSE,test,__tests__,tests,example,demo}/**"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": true,
+      "deleteAppDataOnUninstall": true
+    }
+  },
+  "keywords": [
+    "remote-desktop",
+    "electron"
+  ],
+  "author": "Abhaya Dev Team",
   "license": "ISC",
   "devDependencies": {
     "@types/bun": "latest",
     "concurrently": "^9.2.1",
     "electron": "^39.2.7",
+    "electron-builder": "^26.0.12",
     "electron-rebuild": "^3.2.9"
   },
   "private": true,

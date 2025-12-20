@@ -35,7 +35,8 @@ function generateCode() {
 
 function initSocket() {
     if (socket) return socket;
-    socket = io('https://any-desk-backend.onrender.com');
+    // socket = io('https://any-desk-backend.onrender.com');
+    socket = io('https://overhappy-bertha-semidomestic.ngrok-free.dev');
 
     socket.on('connect', () => console.log('Connected to signaling server'));
 
