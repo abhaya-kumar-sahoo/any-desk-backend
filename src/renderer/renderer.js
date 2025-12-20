@@ -35,7 +35,7 @@ function generateCode() {
 
 function initSocket() {
     if (socket) return socket;
-    socket = io('http://localhost:3000');
+    socket = io('https://any-desk-backend.onrender.com');
 
     socket.on('connect', () => console.log('Connected to signaling server'));
 
