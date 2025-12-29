@@ -16,6 +16,8 @@ const disconnectBtn = document.getElementById('disconnect-btn');
 const accessCodeDisplay = document.getElementById('access-code');
 const remoteCodeInput = document.getElementById('remote-code');
 const remoteCanvas = document.getElementById('remote-canvas');
+const connectStatus = document.getElementById('connect-status');
+const connectLoader = document.getElementById('connect-loader');
 const ctx = remoteCanvas.getContext('2d');
 
 let socket;
@@ -35,10 +37,14 @@ function generateCode() {
 
 function initSocket() {
     if (socket) return socket;
-    // socket = io('https://any-desk-backend.onrender.com');
+
+    // Use the ngrok or server URL
     socket = io('https://overhappy-bertha-semidomestic.ngrok-free.dev');
 
-    socket.on('connect', () => console.log('Connected to signaling server'));
+    socket.on('connect', () => {
+        console.log('Connected to signaling server');
+        if (connectStatus) connectStatus.innerText = 'Connected to Server';
+    });
 
     socket.on('screen-frame', (frame) => {
         const img = new Image();
@@ -48,6 +54,13 @@ function initSocket() {
             ctx.drawImage(img, 0, 0);
         };
         img.src = frame;
+
+        // On first frame, hide loader and show remote view fully
+        if (!connectLoader.classList.contains('hidden')) {
+            connectLoader.classList.add('hidden');
+            connectStatus.classList.add('hidden');
+            showView(remoteView);
+        }
     });
 
     socket.on('remote-input', (event) => {
@@ -56,12 +69,29 @@ function initSocket() {
         }
     });
 
-    socket.on('error', (msg) => alert(msg));
+    socket.on('client-connected', () => {
+        const statusEl = hostView.querySelector('.status');
+        if (statusEl) statusEl.innerText = 'Client connected and viewing.';
+    });
+
+    socket.on('host-disconnected', () => {
+        alert('Host has disconnected.');
+        showView(homeView);
+        if (socket) socket.disconnect();
+        socket = null;
+    });
+
+    socket.on('error', (msg) => {
+        alert(msg);
+        connectLoader.classList.add('hidden');
+        connectStatus.innerText = msg;
+        startSessionBtn.disabled = false;
+    });
 
     return socket;
 }
 
-// Host Screen Capture Implementation (Simplified in Renderer for ease of access to DOM/navigator)
+// Host Screen Capture Implementation
 async function startCapture(sourceId) {
     try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -91,7 +121,7 @@ async function startCapture(sourceId) {
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 vCtx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const frame = canvas.toDataURL('image/jpeg', 0.5);
+                const frame = canvas.toDataURL('image/jpeg', 0.4); // Lower quality (0.4) for better speed
                 socket.emit('screen-data', { code: currentSessionCode, frame });
             }
         }, 66); // ~15 FPS
@@ -108,13 +138,17 @@ hostBtn.addEventListener('click', async () => {
     accessCodeDisplay.innerText = code;
     showView(hostView);
 
-    initSocket().emit('register-host', code);
-    ipcRenderer.send('start-hosting', code);
+    const s = initSocket();
+    s.emit('register-host', code);
+
+    // Give some time for socket to register before starting capture
+    setTimeout(() => {
+        ipcRenderer.send('start-hosting', code);
+    }, 500);
 });
 
 ipcRenderer.on('host-started', (event, data) => {
     if (data.sources && data.sources.length > 0) {
-        // Just take the first screen for now
         startCapture(data.sources[0].id);
     }
 });
@@ -122,6 +156,9 @@ ipcRenderer.on('host-started', (event, data) => {
 // CLIENT LOGIC
 connectBtn.addEventListener('click', () => {
     showView(connectView);
+    connectStatus.classList.add('hidden');
+    connectLoader.classList.add('hidden');
+    startSessionBtn.disabled = false;
 });
 
 startSessionBtn.addEventListener('click', () => {
@@ -129,8 +166,16 @@ startSessionBtn.addEventListener('click', () => {
     if (!code) return;
 
     currentSessionCode = code;
-    showView(remoteView);
-    initSocket().emit('join-session', code);
+    startSessionBtn.disabled = true;
+    connectStatus.classList.remove('hidden');
+    connectLoader.classList.remove('hidden');
+    connectStatus.innerText = 'Establishing Connection...';
+
+    const s = initSocket();
+    // Use a small delay to ensure socket is ready
+    setTimeout(() => {
+        s.emit('join-session', code);
+    }, 300);
 });
 
 // Event Listeners for UI
@@ -138,6 +183,8 @@ stopHostBtn.addEventListener('click', () => {
     isHosting = false;
     clearInterval(captureInterval);
     if (screenStream) screenStream.getTracks().forEach(t => t.stop());
+    if (socket) socket.disconnect();
+    socket = null;
     showView(homeView);
 });
 
@@ -150,42 +197,32 @@ disconnectBtn.addEventListener('click', () => {
 });
 
 // Capture Canvas Inputs for Remote Control
-remoteCanvas.addEventListener('mousemove', (e) => {
+function sendInput(type, data) {
     if (!currentSessionCode || isHosting || remoteView.classList.contains('hidden')) return;
+    socket.emit('input-event', {
+        code: currentSessionCode,
+        type,
+        ...data
+    });
+}
+
+remoteCanvas.addEventListener('mousemove', (e) => {
     const rect = remoteCanvas.getBoundingClientRect();
     const x = (e.clientX - rect.left) * (remoteCanvas.width / rect.width);
     const y = (e.clientY - rect.top) * (remoteCanvas.height / rect.height);
-
-    socket.emit('input-event', {
-        code: currentSessionCode,
-        type: 'mousemove',
-        x, y
-    });
+    sendInput('mousemove', { x, y });
 });
 
 remoteCanvas.addEventListener('mousedown', (e) => {
-    if (!currentSessionCode || isHosting || remoteView.classList.contains('hidden')) return;
-    socket.emit('input-event', {
-        code: currentSessionCode,
-        type: 'mousedown',
-        button: e.button === 0 ? 'left' : (e.button === 2 ? 'right' : 'middle')
-    });
+    sendInput('mousedown', { button: e.button === 0 ? 'left' : (e.button === 2 ? 'right' : 'middle') });
 });
 
 remoteCanvas.addEventListener('mouseup', (e) => {
-    if (!currentSessionCode || isHosting || remoteView.classList.contains('hidden')) return;
-    socket.emit('input-event', {
-        code: currentSessionCode,
-        type: 'mouseup',
-        button: e.button === 0 ? 'left' : (e.button === 2 ? 'right' : 'middle')
-    });
+    sendInput('mouseup', { button: e.button === 0 ? 'left' : (e.button === 2 ? 'right' : 'middle') });
 });
 
 window.addEventListener('keydown', (e) => {
-    if (!currentSessionCode || isHosting || remoteView.classList.contains('hidden')) return;
-    socket.emit('input-event', {
-        code: currentSessionCode,
-        type: 'keydown',
+    sendInput('keydown', {
         key: e.key.toLowerCase(),
         modifiers: [
             e.ctrlKey && 'control',

@@ -210,24 +210,77 @@ input:focus {
   justify-content: center;
 }
 
-/* Remote View */
-.remote-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
+/* Loader */
+.loader {
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-left-color: var(--accent-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
 }
 
-#remote-canvas {
-  width: 100%;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.status-message {
+  text-align: center;
+  margin: 10px 0;
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+/* Full Screen View */
+.full-screen {
+  max-width: none !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  padding: 0 !important;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
   background-color: black;
-  border-radius: var(--border-radius);
-  flex: 1;
 }
 
-.remote-toolbar {
-  padding: 15px;
+.full-screen .remote-container {
+  height: 100vh;
+}
+
+.full-screen #remote-canvas {
+  border-radius: 0;
+  object-fit: contain;
+}
+
+.full-screen .remote-toolbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  padding: 10px 20px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.full-screen .remote-toolbar:hover {
+  opacity: 1;
+}
+
+.toolbar-left {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 20px;
+}
+
+#session-status {
+  font-size: 0.85rem;
+  color: var(--success-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }

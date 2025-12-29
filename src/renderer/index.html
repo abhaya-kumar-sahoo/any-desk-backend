@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Antigravity Remote</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
     <div id="app">
         <header>
@@ -50,6 +52,8 @@
                         <label for="remote-code">Enter Access Code</label>
                         <input type="text" id="remote-code" placeholder="000 000">
                     </div>
+                    <div id="connect-status" class="status-message hidden">Connecting...</div>
+                    <div id="connect-loader" class="loader hidden"></div>
                     <div class="form-actions">
                         <button class="secondary-btn" id="back-home-btn">Back</button>
                         <button class="primary-btn" id="start-session-btn">Connect</button>
@@ -57,11 +61,14 @@
                 </div>
             </div>
 
-            <div id="remote-view" class="view hidden">
+            <div id="remote-view" class="view hidden full-screen">
                 <div class="remote-container">
                     <canvas id="remote-canvas"></canvas>
                     <div class="remote-toolbar">
-                        <button id="disconnect-btn">Disconnect</button>
+                        <div class="toolbar-left">
+                            <button id="disconnect-btn">Disconnect</button>
+                            <span id="session-status">Secure Connection</span>
+                        </div>
                         <span id="quality-indicator">Latency: --ms</span>
                     </div>
                 </div>
@@ -70,4 +77,5 @@
     </div>
     <script src="renderer.js"></script>
 </body>
+
 </html>
